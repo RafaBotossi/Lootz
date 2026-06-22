@@ -316,8 +316,39 @@ main { position: relative; }
 .coin-purses strong { font-size: clamp(1.2rem, 2vw, 1.72rem); }
 .coin-purses small { color: #9b692a; font-family: Cinzel, serif; font-size: .72rem; font-weight: 800; }
 .coin-purses i { width: 1px; height: 30px; background: rgba(81,53,34,.18); }
-.coin-purses .platinum strong { color: #59636b; }
-.coin-purses .platinum small { color: #68727a; }
+.coin-purses .gold-purse strong { color: #c88818; text-shadow: 0 1px #fff2bd; }
+.coin-purses .gold-purse small { color: #a9690b; }
+.coin-purses .platinum strong { color: #64717c; text-shadow: 0 1px #f5fbff; }
+.coin-purses .platinum small { color: #66747d; }
+.coin-purses .coin-icon {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 19px;
+  align-self: center;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.28), inset 0 0 0 4px rgba(75,43,16,.16), 0 2px 4px rgba(48,28,15,.28);
+}
+.coin-purses .coin-icon::after {
+  content: "◆";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  font-size: 7px;
+  line-height: 1;
+}
+.coin-purses .gold-coin {
+  border: 1px solid #9d5e08;
+  background: radial-gradient(circle at 35% 28%, #ffeaa0, #e4a72f 48%, #a76008);
+  color: #905306;
+}
+.coin-purses .silver-coin {
+  border: 1px solid #626d75;
+  background: radial-gradient(circle at 35% 28%, #f7fbff, #b9c3ca 48%, #68747c);
+  color: #59646b;
+}
 .total-card { color: var(--cream); background: linear-gradient(145deg, #3e271b, #21150f); }
 .total-card p, .total-card small { color: #c8ad88; }
 .total-card strong { color: var(--gold-light); }
@@ -608,6 +639,8 @@ footer p { margin: 5px; }
   .coin-purses strong { font-size: clamp(.87rem, 4vw, 1.02rem); }
   .coin-purses small { display: inline; font-size: .53rem; }
   .coin-purses i { height: 21px; }
+  .coin-purses .coin-icon { width: 14px; height: 14px; flex-basis: 14px; }
+  .coin-purses .coin-icon::after { font-size: 5px; }
   .member-control {
     margin-top: 5px;
     gap: 3px;
