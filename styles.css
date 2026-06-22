@@ -270,10 +270,20 @@ main { position: relative; }
 .text-button.danger { color: #8a3f35; }
 
 .summary-grid {
+  position: sticky;
+  top: 10px;
+  z-index: 30;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
+  padding: 10px;
   margin-bottom: 18px;
+  border: 1px solid rgba(218, 151, 66, .2);
+  border-radius: 11px;
+  background: rgba(25, 13, 7, .78);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .summary-card {
@@ -433,8 +443,24 @@ footer p { margin: 5px; }
   .hero-meta { flex-direction: column; gap: 7px; }
   .hero-meta span + span { padding: 0; border: 0; }
   .ledger-wrap { width: calc(100% - 18px); }
-  .summary-grid { grid-template-columns: 1fr; }
-  .summary-card { min-height: 145px; }
+  .summary-grid {
+    top: 6px;
+    display: flex;
+    gap: 9px;
+    padding: 8px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: inline mandatory;
+    scrollbar-width: none;
+  }
+  .summary-grid::-webkit-scrollbar { display: none; }
+  .summary-card {
+    min-width: 225px;
+    min-height: 132px;
+    flex: 0 0 225px;
+    padding: 18px;
+    scroll-snap-align: start;
+  }
   .filters { grid-template-columns: 1fr; }
   .search-box { grid-column: auto; }
   .table-meta { align-items: flex-start; flex-direction: column; gap: 7px; }
