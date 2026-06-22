@@ -194,6 +194,10 @@ function renderSummary() {
   el("itemCount").textContent = state.items.length;
   el("itemCountHero").textContent = state.items.length;
   el("sourceName").textContent = state.source;
+  const sellableItems = state.items.filter(item => !isCashItem(item));
+  const allSelected = sellableItems.length > 0 && sellableItems.every(item => item.vender);
+  el("toggleAll").textContent = allSelected ? "Desmarcar tudo" : "Marcar tudo";
+  el("toggleAll").title = allSelected ? "Desmarcar todos os itens vendáveis" : "Marcar todos os itens vendáveis";
 }
 
 function renderCategories() {
@@ -364,8 +368,11 @@ document.addEventListener("click", event => {
 });
 el("saleFilter").addEventListener("change", event => { state.sale = event.target.value; renderTable(); });
 el("sortSelect").addEventListener("change", event => { state.sort = event.target.value; renderTable(); });
-el("selectAll").addEventListener("click", () => setAllSale(true));
-el("clearAll").addEventListener("click", () => setAllSale(false));
+el("toggleAll").addEventListener("click", () => {
+  const sellableItems = state.items.filter(item => !isCashItem(item));
+  const allSelected = sellableItems.length > 0 && sellableItems.every(item => item.vender);
+  setAllSale(!allSelected);
+});
 el("exportCsv").addEventListener("click", exportCsv);
 el("soundToggle").addEventListener("click", toggleAmbience);
 el("volumeSlider").addEventListener("input", event => {

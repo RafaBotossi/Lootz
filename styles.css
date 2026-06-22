@@ -420,6 +420,24 @@ tbody tr { transition: background .16s ease, opacity .16s ease; animation: rowIn
 tbody tr:hover { background: rgba(222, 169, 79, .11); }
 tbody tr.kept { opacity: .69; }
 .sell-column { width: 74px; text-align: center; }
+.sell-column > span { display: block; }
+.toggle-all-button {
+  margin: 4px auto 0;
+  padding: 2px 4px;
+  display: block;
+  border: 0;
+  border-bottom: 1px dotted rgba(117, 78, 43, .55);
+  color: #9a6a35;
+  background: transparent;
+  font-family: "IM Fell English", Georgia, serif;
+  font-size: .58rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+}
+.toggle-all-button:hover { color: var(--ember); border-color: var(--ember); }
 .number-column { text-align: right; white-space: nowrap; }
 .item-name { display: block; font-weight: 700; font-size: 1.04rem; }
 .item-note { display: block; max-width: 330px; margin-top: 3px; color: #806b58; font-size: .8rem; font-style: italic; }

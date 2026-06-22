@@ -119,10 +119,6 @@
         <div class="table-meta">
           <p>Exibindo <strong id="visibleCount">0</strong> de <strong id="itemCount">0</strong> itens</p>
           <div class="table-actions">
-            <button id="selectAll" class="text-button" type="button">Marcar tudo</button>
-            <span></span>
-            <button id="clearAll" class="text-button" type="button">Desmarcar tudo</button>
-            <span></span>
             <button id="exportCsv" class="text-button" type="button">Baixar seleção em CSV ↓</button>
           </div>
         </div>
@@ -131,7 +127,10 @@
           <table>
             <thead>
               <tr>
-                <th class="sell-column">Vender</th>
+                <th class="sell-column">
+                  <span>Vender</span>
+                  <button id="toggleAll" class="toggle-all-button" type="button">Marcar tudo</button>
+                </th>
                 <th>Item</th>
                 <th>Origem</th>
                 <th>Categoria</th>
