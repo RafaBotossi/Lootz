@@ -1,4 +1,5 @@
 const DEFAULT_FILE = "inventario_venda_rpg_ordenado.xlsx";
+const DEFAULT_FILE_VERSION = "20260622-1324";
 const STORAGE_KEY = "lootz-inventory-v1";
 
 const state = {
@@ -102,6 +103,7 @@ async function loadExample() {
   button.textContent = "Carregando...";
   try {
     const exampleUrl = new URL(`./${DEFAULT_FILE}`, document.baseURI);
+    exampleUrl.searchParams.set("v", DEFAULT_FILE_VERSION);
     const response = await fetch(exampleUrl, {
       cache: "no-store",
       credentials: "same-origin"
