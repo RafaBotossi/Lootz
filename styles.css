@@ -345,7 +345,7 @@ main { position: relative; }
   grid-template-columns: minmax(270px, 1.6fr) repeat(3, minmax(150px, .7fr));
   gap: 10px;
   padding: 18px;
-  background: rgba(58, 37, 25, .06);
+  background: #ead7b4;
   border-bottom: 1px solid var(--border);
   box-shadow: 0 8px 22px rgba(35, 20, 11, .14);
 }
@@ -633,10 +633,8 @@ footer p { margin: 5px; }
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
     padding: 8px;
-    background: rgba(238, 220, 185, .97);
+    background: #ead8b7;
     box-shadow: 0 8px 20px rgba(25, 13, 7, .3);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
   }
   .search-box { grid-column: 1 / -1; }
   .filters select, .multi-select-toggle, .search-box input {
