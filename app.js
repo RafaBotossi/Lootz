@@ -242,22 +242,94 @@ function setAllSale(value) {
   showToast(value ? "Todos os itens vendáveis foram marcados." : "Todos os itens foram desmarcados.");
 }
 
-function exportCsv() {
-  const headers = ["Origem", "Item", "Qtd.", "Categoria", "Vender?", "Valor base (gp)", "Bônus aplicado", "Venda líquida (gp)", "Observação"];
-  const rows = state.visible.map(item => [
-    item.origem, item.item, item.quantidade, item.categoria, item.vender ? "Sim" : "Não",
-    item.valorBase, item.bonus, saleValue(item), item.observacao
-  ]);
-  const csv = [headers, ...rows]
-    .map(row => row.map(value => `"${String(value ?? "").replaceAll('"', '""')}"`).join(";"))
-    .join("\r\n");
-  const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "lootz-selecao.csv";
-  link.click();
-  URL.revokeObjectURL(link.href);
-  showToast("A seleção foi selada em CSV.");
+function exportSpreadsheet() {
+  if (!window.XLSX) {
+    showToast("O exportador de planilhas não carregou.");
+    return;
+  }
+
+  const inventoryRows = [...state.items]
+    .sort((a, b) => a.order - b.order)
+    .map(item => ({
+      "Origem": item.origem,
+      "Item": item.item,
+      "Qtd.": item.quantidade,
+      "Valor real (gp)": item.valorReal || "",
+      "Valor estimado (gp)": item.valorEstimado || "",
+      "Como foi estimado": item.estimativa,
+      "Categoria": item.categoria,
+      "Vender?": item.vender ? "Sim" : "Não",
+      "Valor base (gp)": item.valorBase,
+      "Bônus aplicado": item.bonus,
+      "Venda líquida (gp)": saleValue(item),
+      "Observação": item.observacao
+    }));
+
+  const cash = state.items
+    .filter(isCashItem)
+    .reduce((sum, item) => sum + item.valorBase * item.quantidade, 0);
+  const sales = state.items.reduce((sum, item) => sum + saleValue(item), 0);
+  const kept = state.items
+    .filter(item => !item.vender && !isCashItem(item))
+    .reduce((sum, item) => sum + item.valorBase * item.quantidade, 0);
+  const total = cash + sales;
+
+  const summaryRows = [
+    ["Resumo do caixa e divisão — LootZ", ""],
+    [],
+    ["Componente", "Total (gp)"],
+    ["Moedas e recompensas em caixa", cash],
+    ["Receita estimada de vendas", sales],
+    ["Total disponível para dividir", total],
+    ["Divisão por pessoa", total / Math.max(1, state.members)],
+    ["Itens mantidos (valor de referência)", kept]
+  ];
+  const categoryBonus = category => {
+    const item = state.items.find(candidate => normalized(candidate.categoria) === normalized(category));
+    return item?.bonus || 0;
+  };
+  const parameterRows = [
+    ["Parâmetro", "Valor"],
+    ["Bônus de venda — itens comuns", categoryBonus("Item comum")],
+    ["Bônus de venda — gemas/arte", categoryBonus("Joia") || categoryBonus("Arte")],
+    ["Bônus de venda — itens mágicos", categoryBonus("Mágico")],
+    ["Divisores (membros)", state.members]
+  ];
+  const calculationRows = [
+    ["Categoria", "Vender?", "Base", "Caixa", "Venda", "Mantido"],
+    ...[...state.items]
+      .sort((a, b) => a.order - b.order)
+      .map(item => [
+        item.categoria,
+        item.vender ? "Sim" : "Não",
+        item.valorBase * item.quantidade,
+        isCashItem(item) ? item.valorBase * item.quantidade : 0,
+        saleValue(item),
+        !item.vender && !isCashItem(item) ? item.valorBase * item.quantidade : 0
+      ])
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  const inventorySheet = XLSX.utils.json_to_sheet(inventoryRows);
+  const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
+  const parameterSheet = XLSX.utils.aoa_to_sheet(parameterRows);
+  const calculationSheet = XLSX.utils.aoa_to_sheet(calculationRows);
+
+  inventorySheet["!cols"] = [
+    { wch: 30 }, { wch: 42 }, { wch: 8 }, { wch: 17 }, { wch: 21 }, { wch: 48 },
+    { wch: 18 }, { wch: 11 }, { wch: 18 }, { wch: 17 }, { wch: 21 }, { wch: 48 }
+  ];
+  summarySheet["!cols"] = [{ wch: 40 }, { wch: 20 }];
+  parameterSheet["!cols"] = [{ wch: 32 }, { wch: 16 }];
+  calculationSheet["!cols"] = [{ wch: 20 }, { wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
+
+  XLSX.utils.book_append_sheet(workbook, inventorySheet, "Inventário");
+  XLSX.utils.book_append_sheet(workbook, summarySheet, "Resumo");
+  XLSX.utils.book_append_sheet(workbook, parameterSheet, "Parâmetros");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(parameterRows), "Parametros");
+  XLSX.utils.book_append_sheet(workbook, calculationSheet, "Calculos");
+  XLSX.writeFile(workbook, "inventario_lootz_atualizado.xlsx");
+  showToast("A planilha atualizada foi exportada.");
 }
 
 let toastTimer;
@@ -373,7 +445,7 @@ el("toggleAll").addEventListener("click", () => {
   const allSelected = sellableItems.length > 0 && sellableItems.every(item => item.vender);
   setAllSale(!allSelected);
 });
-el("exportCsv").addEventListener("click", exportCsv);
+el("exportSpreadsheet").addEventListener("click", exportSpreadsheet);
 el("soundToggle").addEventListener("click", toggleAmbience);
 el("volumeSlider").addEventListener("input", event => {
   const volume = number(event.target.value);
