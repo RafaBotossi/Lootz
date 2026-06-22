@@ -142,7 +142,7 @@ button, select, label.import-button { cursor: pointer; }
   border: 0;
   border-radius: 99px;
   appearance: none;
-  background: linear-gradient(90deg, var(--gold) 0 50%, rgba(255,255,255,.18) 50% 100%);
+  background: linear-gradient(90deg, var(--gold) 0 10%, rgba(255,255,255,.18) 10% 100%);
   outline: none;
   cursor: pointer;
 }
