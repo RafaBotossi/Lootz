@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#17100b">
+  <meta name="description" content="LootZ — inventário e balcão de vendas para parties de RPG.">
+  <title>LootZ — Balcão da Party</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient-glow" aria-hidden="true"></div>
+  <div id="embers" aria-hidden="true"></div>
+
+  <header class="hero">
+    <nav class="topbar">
+      <span class="nav-spacer" aria-hidden="true"></span>
+      <div class="nav-actions">
+        <button id="soundToggle" class="icon-button" type="button" aria-pressed="true" title="Desativar ambiente da taverna">
+          <span class="sound-icon">♫</span><span class="sound-label">Som ligado</span>
+        </button>
+        <label class="button button-primary import-button">
+          <span>Importar planilha</span>
+          <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" hidden>
+        </label>
+      </div>
+    </nav>
+
+    <div class="hero-content">
+      <div class="hero-logo-wrap">
+        <span class="logo-rays" aria-hidden="true"></span>
+        <img class="hero-logo" src="assets/lootz-logo.png" alt="LootZ">
+      </div>
+      <p class="hero-copy">O balcão da party para negociar tesouros, proteger relíquias e dividir cada moeda.</p>
+      <div class="hero-meta">
+        <span><i class="status-dot"></i><strong id="sourceName">Carregando inventário...</strong></span>
+        <span><strong id="itemCountHero">0</strong> itens no balcão</span>
+      </div>
+    </div>
+    <div class="hanging-lantern lantern-left" aria-hidden="true"><span></span></div>
+    <div class="hanging-lantern lantern-right" aria-hidden="true"><span></span></div>
+  </header>
+
+  <main>
+    <section class="ledger-wrap">
+      <div class="summary-grid">
+        <article class="summary-card coin-card">
+          <div class="card-icon">◈</div>
+          <p>Caixa encontrado</p>
+          <div class="coin-purses">
+            <span><strong id="cashGpTotal">0</strong><small>GP</small></span>
+            <i></i>
+            <span class="platinum"><strong id="cashPpTotal">0</strong><small>PP</small></span>
+          </div>
+          <small id="cashConverted">Total convertido: 0 gp</small>
+        </article>
+        <article class="summary-card sale-card">
+          <div class="card-icon">¤</div>
+          <p>Venda planejada</p>
+          <strong id="saleTotal">0 gp</strong>
+          <small><span id="selectedCount">0</span> lotes marcados</small>
+        </article>
+        <article class="summary-card total-card">
+          <div class="card-icon">✦</div>
+          <p>Total para dividir</p>
+          <strong id="grandTotal">0 gp</strong>
+          <small>Caixa + vendas</small>
+        </article>
+        <article class="summary-card split-card">
+          <div class="card-icon">♜</div>
+          <p>Por aventureiro</p>
+          <strong id="splitTotal">0 gp</strong>
+          <label class="member-control">
+            Dividir entre
+            <button id="memberMinus" type="button" aria-label="Remover membro">−</button>
+            <input id="memberCount" type="number" min="1" max="99" value="3" aria-label="Número de membros">
+            <button id="memberPlus" type="button" aria-label="Adicionar membro">+</button>
+          </label>
+        </article>
+      </div>
+
+      <section class="inventory-panel">
+        <div class="filters">
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" placeholder="Buscar item, origem ou observação...">
+          </label>
+          <select id="categoryFilter" aria-label="Filtrar por categoria">
+            <option value="">Todas as categorias</option>
+          </select>
+          <select id="saleFilter" aria-label="Filtrar por decisão">
+            <option value="">Tudo no inventário</option>
+            <option value="sell">Marcados para venda</option>
+            <option value="keep">Itens mantidos</option>
+          </select>
+          <select id="sortSelect" aria-label="Ordenar itens">
+            <option value="original">Ordem da planilha</option>
+            <option value="name-asc">Nome: A–Z</option>
+            <option value="value-desc">Maior valor</option>
+            <option value="value-asc">Menor valor</option>
+            <option value="origin">Origem</option>
+          </select>
+        </div>
+
+        <div class="table-meta">
+          <p>Exibindo <strong id="visibleCount">0</strong> de <strong id="itemCount">0</strong> itens</p>
+          <button id="exportCsv" class="text-button" type="button">Baixar seleção em CSV ↓</button>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th class="sell-column">Vender</th>
+                <th>Item</th>
+                <th>Origem</th>
+                <th>Categoria</th>
+                <th class="number-column">Qtd.</th>
+                <th class="number-column">Base</th>
+                <th class="number-column">Bônus</th>
+                <th class="number-column">Venda</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryBody"></tbody>
+          </table>
+        </div>
+
+        <div id="emptyState" class="empty-state" hidden>
+          <span>☽</span>
+          <h3>Nada encontrado neste baú</h3>
+          <p>Tente remover algum filtro ou buscar por outro termo.</p>
+        </div>
+      </section>
+    </section>
+
+  </main>
+
+  <footer>
+    <img src="assets/lootz-logo.png" alt="" aria-hidden="true">
+    <p>Feito para parties que preferem rolar dados a fazer contas.</p>
+    <p class="footer-note">LootZ funciona inteiramente no navegador. Sua planilha não sai do seu dispositivo.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
