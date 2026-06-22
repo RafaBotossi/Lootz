@@ -661,8 +661,7 @@ footer p { margin: 5px; }
     background: rgba(243, 228, 198, .97);
   }
   .filters {
-    top: 204px;
-    z-index: 28;
+    position: static;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
     padding: 8px;
@@ -676,12 +675,11 @@ footer p { margin: 5px; }
     font-size: .78rem;
   }
   #sortSelect { grid-column: 1 / -1; }
-  .multi-select-menu { position: fixed; top: 292px; left: 12px; right: 12px; width: auto; max-height: 42vh; }
+  .multi-select-menu { position: absolute; top: calc(100% + 6px); left: 0; right: auto; width: max(100%, 230px); max-height: 42vh; }
   .table-meta { align-items: flex-start; flex-direction: column; gap: 10px; }
   .table-actions { width: 100%; flex-wrap: wrap; gap: 6px; }
   .table-meta {
-    top: 346px;
-    z-index: 27;
+    position: static;
     padding: 9px 12px;
     font-size: .78rem;
     background: rgba(238, 220, 185, .98);
@@ -697,7 +695,7 @@ footer p { margin: 5px; }
   table thead { visibility: collapse; }
   .mobile-table-header {
     position: sticky;
-    top: 410px;
+    top: 204px;
     z-index: 27;
     display: block;
     overflow-x: auto;
