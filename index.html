@@ -19,9 +19,16 @@
     <nav class="topbar">
       <span class="nav-spacer" aria-hidden="true"></span>
       <div class="nav-actions">
-        <button id="soundToggle" class="icon-button" type="button" aria-pressed="true" title="Desativar ambiente da taverna">
-          <span class="sound-icon">♫</span><span class="sound-label">Som ligado</span>
-        </button>
+        <div class="sound-control">
+          <button id="soundToggle" class="icon-button" type="button" aria-pressed="true" title="Desativar ambiente da taverna">
+            <span class="sound-icon">♫</span><span class="sound-label">Som ligado</span>
+          </button>
+          <label class="volume-control" title="Volume da taverna">
+            <span aria-hidden="true">−</span>
+            <input id="volumeSlider" type="range" min="0" max="100" value="50" aria-label="Volume da música" aria-valuetext="50%">
+            <span aria-hidden="true">+</span>
+          </label>
+        </div>
         <label class="button button-primary import-button">
           <span>Importar planilha</span>
           <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" hidden>

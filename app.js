@@ -263,7 +263,7 @@ let soundStarted = false;
 async function startAmbience(silent = false) {
   if (!soundEnabled || soundStarted) return;
   const audio = el("tavernAudio");
-  audio.volume = 0.32;
+  audio.volume = number(el("volumeSlider").value) / 100;
   try {
     await audio.play();
     soundStarted = true;
@@ -326,6 +326,13 @@ el("saleFilter").addEventListener("change", event => { state.sale = event.target
 el("sortSelect").addEventListener("change", event => { state.sort = event.target.value; renderTable(); });
 el("exportCsv").addEventListener("click", exportCsv);
 el("soundToggle").addEventListener("click", toggleAmbience);
+el("volumeSlider").addEventListener("input", event => {
+  const volume = number(event.target.value);
+  el("tavernAudio").volume = volume / 100;
+  event.target.setAttribute("aria-valuetext", `${volume}%`);
+  event.target.style.background = `linear-gradient(90deg, var(--gold) 0 ${volume}%, rgba(255,255,255,.18) ${volume}% 100%)`;
+  if (volume > 0 && soundEnabled && !soundStarted) startAmbience(true);
+});
 el("memberMinus").addEventListener("click", () => { state.members = Math.max(1, state.members - 1); saveState(); renderSummary(); });
 el("memberPlus").addEventListener("click", () => { state.members = Math.min(99, state.members + 1); saveState(); renderSummary(); });
 el("memberCount").addEventListener("change", event => { state.members = Math.max(1, Math.min(99, number(event.target.value))); saveState(); renderSummary(); });

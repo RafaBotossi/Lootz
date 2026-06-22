@@ -99,6 +99,55 @@ button, select, label.import-button { cursor: pointer; }
 
 .nav-spacer { flex: 1; }
 .nav-actions { display: flex; gap: 12px; align-items: center; }
+.sound-control {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(242, 197, 103, .35);
+  border-radius: 5px;
+  background: rgba(20, 12, 8, .5);
+  transition: .2s ease;
+}
+.sound-control:hover { border-color: var(--gold-light); }
+.sound-control .icon-button { border: 0; border-radius: 0; background: transparent; }
+.sound-control .icon-button:hover { transform: none; }
+.volume-control {
+  height: 48px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #ae8d58;
+  border-left: 1px solid rgba(242, 197, 103, .2);
+  font-family: Cinzel, serif;
+  font-size: .68rem;
+}
+.volume-control input {
+  width: 92px;
+  height: 4px;
+  border: 0;
+  border-radius: 99px;
+  appearance: none;
+  background: linear-gradient(90deg, var(--gold) 0 50%, rgba(255,255,255,.18) 50% 100%);
+  outline: none;
+  cursor: pointer;
+}
+.volume-control input::-webkit-slider-thumb {
+  width: 14px;
+  height: 14px;
+  appearance: none;
+  border: 2px solid #3c2516;
+  border-radius: 50%;
+  background: var(--gold-light);
+  box-shadow: 0 0 8px rgba(234,172,67,.4);
+}
+.volume-control input::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #3c2516;
+  border-radius: 50%;
+  background: var(--gold-light);
+}
 
 .button, .icon-button {
   border: 1px solid rgba(242, 197, 103, .35);
@@ -348,6 +397,8 @@ footer p { margin: 5px; }
 @media (max-width: 650px) {
   .topbar { height: 105px; width: calc(100% - 24px); }
   .sound-label { display: none; }
+  .volume-control { padding: 0 9px; }
+  .volume-control input { width: 64px; }
   .button, .icon-button { padding: 10px 12px; }
   .hero { min-height: 565px; }
   .hero-content { margin-top: 38px; }
