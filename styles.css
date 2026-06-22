@@ -522,22 +522,63 @@ footer p { margin: 5px; }
   .hero-meta span + span { padding: 0; border: 0; }
   .ledger-wrap { width: calc(100% - 18px); }
   .summary-grid {
-    top: 6px;
-    display: flex;
-    gap: 9px;
-    padding: 8px;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    scroll-snap-type: inline mandatory;
-    scrollbar-width: none;
+    top: 4px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 6px;
+    overflow: visible;
   }
-  .summary-grid::-webkit-scrollbar { display: none; }
   .summary-card {
-    min-width: 225px;
-    min-height: 132px;
-    flex: 0 0 225px;
-    padding: 18px;
-    scroll-snap-align: start;
+    min-width: 0;
+    min-height: 94px;
+    padding: 12px 11px;
+    border-radius: 5px;
+  }
+  .summary-card::after { inset: 4px; }
+  .summary-card:hover { transform: none; }
+  .summary-card p {
+    margin-bottom: 4px;
+    padding-right: 18px;
+    overflow: hidden;
+    font-size: .72rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .summary-card > strong {
+    font-size: clamp(.98rem, 4.7vw, 1.18rem);
+    letter-spacing: -.04em;
+  }
+  .summary-card > small {
+    display: none;
+  }
+  .card-icon {
+    top: 9px;
+    right: 10px;
+    font-size: 1.15rem;
+  }
+  .coin-purses {
+    margin: 5px 0 0;
+    gap: 7px;
+  }
+  .coin-purses strong { font-size: clamp(.87rem, 4vw, 1.02rem); }
+  .coin-purses small { display: inline; font-size: .53rem; }
+  .coin-purses i { height: 21px; }
+  .member-control {
+    margin-top: 5px;
+    gap: 3px;
+    font-size: .61rem;
+  }
+  .member-control button {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    line-height: 15px;
+  }
+  .member-control input {
+    width: 24px;
+    font-size: .72rem;
   }
   .filters { grid-template-columns: 1fr; }
   .search-box { grid-column: auto; }
