@@ -573,12 +573,19 @@ footer p { margin: 5px; }
 
 @media (max-width: 940px) {
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
-  .filters { top: 404px; }
+  .filters { position: static; }
   .table-meta { top: 592px; }
   th { top: 640px; }
   .filters { grid-template-columns: 1fr 1fr; }
   .search-box { grid-column: 1 / -1; }
   .hanging-lantern { display: none; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .filters {
+    position: static;
+    top: auto;
+  }
 }
 
 @media (max-width: 650px) {
