@@ -394,6 +394,17 @@ footer { padding: 45px 20px; color: #a68f77; background: rgba(16, 11, 8, .94); t
 footer img { width: 120px; height: 65px; object-fit: contain; filter: saturate(.7); }
 footer p { margin: 5px; }
 .footer-note { font-size: .78rem; color: #705f4f; }
+.footer-credit {
+  margin-top: 20px;
+  color: #8f755d;
+  font-size: .82rem;
+  letter-spacing: .08em;
+}
+.footer-credit strong {
+  color: var(--gold);
+  font-family: Cinzel, serif;
+  font-weight: 600;
+}
 
 .toast {
   position: fixed;
