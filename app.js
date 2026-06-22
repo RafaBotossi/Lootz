@@ -196,8 +196,10 @@ function renderSummary() {
   el("sourceName").textContent = state.source;
   const sellableItems = state.items.filter(item => !isCashItem(item));
   const allSelected = sellableItems.length > 0 && sellableItems.every(item => item.vender);
-  el("toggleAll").textContent = allSelected ? "Desmarcar tudo" : "Marcar tudo";
-  el("toggleAll").title = allSelected ? "Desmarcar todos os itens vendáveis" : "Marcar todos os itens vendáveis";
+  document.querySelectorAll(".toggle-all-trigger").forEach(button => {
+    button.textContent = allSelected ? "Desmarcar tudo" : "Marcar tudo";
+    button.title = allSelected ? "Desmarcar todos os itens vendáveis" : "Marcar todos os itens vendáveis";
+  });
 }
 
 function renderCategories() {
@@ -440,10 +442,26 @@ document.addEventListener("click", event => {
 });
 el("saleFilter").addEventListener("change", event => { state.sale = event.target.value; renderTable(); });
 el("sortSelect").addEventListener("change", event => { state.sort = event.target.value; renderTable(); });
-el("toggleAll").addEventListener("click", () => {
+document.querySelectorAll(".toggle-all-trigger").forEach(button => button.addEventListener("click", () => {
   const sellableItems = state.items.filter(item => !isCashItem(item));
   const allSelected = sellableItems.length > 0 && sellableItems.every(item => item.vender);
   setAllSale(!allSelected);
+}));
+
+let syncingTableScroll = false;
+const tableScroll = el("tableScroll");
+const mobileTableHeader = el("mobileTableHeader");
+tableScroll.addEventListener("scroll", () => {
+  if (syncingTableScroll) return;
+  syncingTableScroll = true;
+  mobileTableHeader.scrollLeft = tableScroll.scrollLeft;
+  requestAnimationFrame(() => { syncingTableScroll = false; });
+});
+mobileTableHeader.addEventListener("scroll", () => {
+  if (syncingTableScroll) return;
+  syncingTableScroll = true;
+  tableScroll.scrollLeft = mobileTableHeader.scrollLeft;
+  requestAnimationFrame(() => { syncingTableScroll = false; });
 });
 el("exportSpreadsheet").addEventListener("click", exportSpreadsheet);
 el("soundToggle").addEventListener("click", toggleAmbience);
