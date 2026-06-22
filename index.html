@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260622-2">
+  <link rel="stylesheet" href="styles.css?v=20260622-4">
 </head>
 <body>
   <div class="ambient-glow" aria-hidden="true"></div>
@@ -25,10 +25,11 @@
           </button>
           <label class="volume-control" title="Volume da taverna">
             <span aria-hidden="true">−</span>
-            <input id="volumeSlider" type="range" min="0" max="100" value="10" aria-label="Volume da música" aria-valuetext="10%">
+            <input id="volumeSlider" type="range" min="0" max="100" value="5" aria-label="Volume da música" aria-valuetext="5%">
             <span aria-hidden="true">+</span>
           </label>
         </div>
+        <button id="loadExample" class="button" type="button">Carregar exemplo</button>
         <label class="button button-primary import-button">
           <span>Importar planilha</span>
           <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" hidden>
@@ -43,7 +44,7 @@
       </div>
       <p class="hero-copy">O balcão da party para negociar tesouros, proteger relíquias e dividir cada moeda.</p>
       <div class="hero-meta">
-        <span><i class="status-dot"></i><strong id="sourceName">Carregando inventário...</strong></span>
+        <span><i class="status-dot"></i><strong id="sourceName">Importe uma planilha ou carregue o exemplo</strong></span>
         <span><strong id="itemCountHero">0</strong> itens no balcão</span>
       </div>
     </div>
@@ -133,7 +134,7 @@
             <div>Origem</div>
             <div>Categoria</div>
             <div class="number-column">Qtd.</div>
-            <div class="number-column">Base</div>
+            <div class="number-column">GP base</div>
             <div class="number-column">Bônus</div>
             <div class="number-column">Venda</div>
           </div>
@@ -155,7 +156,7 @@
                 <th>Origem</th>
                 <th>Categoria</th>
                 <th class="number-column">Qtd.</th>
-                <th class="number-column">Base</th>
+                <th class="number-column">GP base</th>
                 <th class="number-column">Bônus</th>
                 <th class="number-column">Venda</th>
               </tr>
@@ -166,8 +167,8 @@
 
         <div id="emptyState" class="empty-state" hidden>
           <span>☽</span>
-          <h3>Nada encontrado neste baú</h3>
-          <p>Tente remover algum filtro ou buscar por outro termo.</p>
+          <h3 id="emptyTitle">O balcão está vazio</h3>
+          <p id="emptyText">Importe uma planilha ou carregue o exemplo para começar.</p>
         </div>
       </section>
     </section>
@@ -183,6 +184,6 @@
   <audio id="tavernAudio" src="assets/tavern-ambience.mp3" loop preload="metadata"></audio>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260622-5"></script>
 </body>
 </html>

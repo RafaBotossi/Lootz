@@ -4,7 +4,7 @@ const STORAGE_KEY = "lootz-inventory-v1";
 const state = {
   items: [],
   members: 3,
-  source: DEFAULT_FILE,
+  source: "Importe uma planilha ou carregue o exemplo",
   search: "",
   categories: [],
   sale: "",
@@ -15,6 +15,7 @@ const state = {
 const el = id => document.getElementById(id);
 const money = value => `${new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0)} gp`;
 const number = value => Number(String(value ?? 0).replace(",", ".")) || 0;
+const editableNumber = value => Number(Number(value || 0).toFixed(4));
 const normalized = value => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 const isCashItem = item => ["moedas", "recompensa"].includes(normalized(item.categoria));
@@ -88,29 +89,40 @@ function parseWorkbook(data, source, markImported = false) {
   showToast(`${items.length} itens chegaram ao balcão.`);
 }
 
-async function loadDefault(force = false) {
-  if (!force) {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed.items) && parsed.items.length) {
-          Object.assign(state, parsed);
-          refresh();
-          return;
-        }
-      } catch (_) {}
-    }
-  }
-
+async function loadExample() {
+  const button = el("loadExample");
+  button.disabled = true;
+  button.textContent = "Carregando...";
   try {
-    const response = await fetch(DEFAULT_FILE);
-    if (!response.ok) throw new Error("Planilha padrão não encontrada.");
+    const exampleUrl = new URL(`./${DEFAULT_FILE}`, document.baseURI);
+    const response = await fetch(exampleUrl, {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) throw new Error("Planilha de exemplo não encontrada.");
     parseWorkbook(await response.arrayBuffer(), DEFAULT_FILE);
   } catch (error) {
-    el("sourceName").textContent = "Importe uma planilha para começar";
-    showToast(error.message);
+    const localFile = location.protocol === "file:";
+    showToast(localFile
+      ? "Abra o LootZ por um servidor web para carregar o exemplo."
+      : `Não foi possível carregar o exemplo: ${error.message}`);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Carregar exemplo";
   }
+}
+
+function loadInitialState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed.items) && parsed.items.length) {
+        Object.assign(state, parsed);
+      }
+    } catch (_) {}
+  }
+  refresh();
 }
 
 function saveState() {
@@ -157,13 +169,34 @@ function renderTable() {
       <td class="origin">${escapeHtml(item.origem)}</td>
       <td><span class="badge">${escapeHtml(item.categoria)}</span></td>
       <td class="number-column">${new Intl.NumberFormat("pt-BR").format(item.quantidade)}</td>
-      <td class="number-column">${money(item.valorBase * item.quantidade)}</td>
-      <td class="number-column">${new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 1 }).format(item.bonus)}</td>
+      <td class="number-column editable-number">
+        <label class="inline-value">
+          <span class="sr-only">GP base de ${escapeHtml(item.item)}</span>
+          <input type="number" min="0" step="0.01" inputmode="decimal"
+            data-id="${escapeHtml(item.id)}" data-field="valorBase"
+            value="${editableNumber(item.valorBase)}" aria-label="GP base de ${escapeHtml(item.item)}">
+          <span>gp</span>
+        </label>
+      </td>
+      <td class="number-column editable-number">
+        <label class="inline-value inline-percent">
+          <span class="sr-only">Bônus de ${escapeHtml(item.item)}</span>
+          <input type="number" step="0.1" inputmode="decimal"
+            data-id="${escapeHtml(item.id)}" data-field="bonus"
+            value="${editableNumber(item.bonus * 100)}" aria-label="Bônus percentual de ${escapeHtml(item.item)}">
+          <span>%</span>
+        </label>
+      </td>
       <td class="number-column sale-value">${item.vender ? money(saleValue(item)) : "—"}</td>
     </tr>
   `).join("");
 
   el("visibleCount").textContent = state.visible.length;
+  const inventoryIsEmpty = state.items.length === 0;
+  el("emptyTitle").textContent = inventoryIsEmpty ? "O balcão está vazio" : "Nada encontrado neste baú";
+  el("emptyText").textContent = inventoryIsEmpty
+    ? "Importe uma planilha ou carregue o exemplo para começar."
+    : "Tente remover algum filtro ou buscar por outro termo.";
   el("emptyState").hidden = state.visible.length > 0;
   document.querySelector(".table-scroll").hidden = state.visible.length === 0;
 }
@@ -406,12 +439,22 @@ el("fileInput").addEventListener("change", event => {
   reader.readAsArrayBuffer(file);
   event.target.value = "";
 });
+el("loadExample").addEventListener("click", loadExample);
 
 el("inventoryBody").addEventListener("change", event => {
-  if (!event.target.matches("input[type='checkbox']")) return;
   const item = state.items.find(candidate => String(candidate.id) === event.target.dataset.id);
   if (!item) return;
-  item.vender = event.target.checked;
+
+  if (event.target.matches("input[type='checkbox']")) {
+    item.vender = event.target.checked;
+  } else if (event.target.matches("input[data-field='valorBase']")) {
+    item.valorBase = Math.max(0, number(event.target.value));
+  } else if (event.target.matches("input[data-field='bonus']")) {
+    item.bonus = number(event.target.value) / 100;
+  } else {
+    return;
+  }
+
   saveState();
   refresh();
 });
@@ -482,4 +525,4 @@ document.addEventListener("pointerdown", event => {
   startAmbience(true);
 }, { once: true, capture: true });
 document.addEventListener("keydown", () => startAmbience(true), { once: true });
-loadDefault();
+loadInitialState();

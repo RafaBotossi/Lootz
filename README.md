@@ -13,7 +13,7 @@ O site é totalmente estático e não precisa de servidor ou etapa de build.
 
 ## Planilha
 
-O arquivo `inventario_venda_rpg_ordenado.xlsx` é carregado automaticamente. Também é possível importar outro `.xlsx`, `.xls` ou `.csv` pelo botão do site. Para melhor compatibilidade, use cabeçalhos equivalentes a:
+O inventário começa vazio. O botão **Carregar exemplo** abre o arquivo `inventario_venda_rpg_ordenado.xlsx` incluído no projeto, enquanto **Importar planilha** aceita outro `.xlsx`, `.xls` ou `.csv`. Para melhor compatibilidade, use cabeçalhos equivalentes a:
 
 `Origem`, `Item`, `Qtd.`, `Valor real (gp)`, `Valor estimado (gp)`, `Categoria`, `Vender?`, `Valor base (gp)`, `Bônus aplicado` e `Observação`.
 
