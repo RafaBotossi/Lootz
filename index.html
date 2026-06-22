@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260622-4">
+  <link rel="stylesheet" href="styles.css?v=20260622-5">
 </head>
 <body>
   <div class="ambient-glow" aria-hidden="true"></div>
@@ -103,23 +103,24 @@
             </button>
             <div id="categoryMenu" class="multi-select-menu" hidden></div>
           </div>
+          <div id="originFilter" class="multi-select">
+            <button id="originToggle" class="multi-select-toggle" type="button" aria-haspopup="true" aria-expanded="false">
+              <span id="originLabel">Todas as origens</span>
+              <span aria-hidden="true">▾</span>
+            </button>
+            <div id="originMenu" class="multi-select-menu" hidden></div>
+          </div>
           <select id="saleFilter" aria-label="Filtrar por decisão">
             <option value="">Tudo no inventário</option>
             <option value="sell">Marcados para venda</option>
             <option value="keep">Itens mantidos</option>
-          </select>
-          <select id="sortSelect" aria-label="Ordenar itens">
-            <option value="original">Ordem da planilha</option>
-            <option value="name-asc">Nome: A–Z</option>
-            <option value="value-desc">Maior valor</option>
-            <option value="value-asc">Menor valor</option>
-            <option value="origin">Origem</option>
           </select>
         </div>
 
         <div class="table-meta">
           <p>Exibindo <strong id="visibleCount">0</strong> de <strong id="itemCount">0</strong> itens</p>
           <div class="table-actions">
+            <button id="addItem" class="text-button" type="button">+ Adicionar linha</button>
             <button id="exportSpreadsheet" class="text-button" type="button">Exportar planilha ↓</button>
           </div>
         </div>
@@ -127,16 +128,17 @@
         <div id="mobileTableHeader" class="mobile-table-header" aria-hidden="true">
           <div class="mobile-header-track">
             <div class="sell-column">
-              <span>Vender</span>
+              <button class="sort-button" type="button" data-sort="vender">Vender</button>
               <button class="toggle-all-button toggle-all-trigger" type="button">Marcar tudo</button>
             </div>
-            <div>Item</div>
-            <div>Origem</div>
-            <div>Categoria</div>
-            <div class="number-column">Qtd.</div>
-            <div class="number-column">GP base</div>
-            <div class="number-column">Bônus</div>
-            <div class="number-column">Venda</div>
+            <div><button class="sort-button" type="button" data-sort="item">Item</button></div>
+            <div><button class="sort-button" type="button" data-sort="origem">Origem</button></div>
+            <div><button class="sort-button" type="button" data-sort="categoria">Categoria</button></div>
+            <div class="number-column"><button class="sort-button" type="button" data-sort="quantidade">Qtd.</button></div>
+            <div class="number-column"><button class="sort-button" type="button" data-sort="valorBase">GP base</button></div>
+            <div class="number-column"><button class="sort-button" type="button" data-sort="bonus">Bônus</button></div>
+            <div class="number-column"><button class="sort-button" type="button" data-sort="venda">Venda</button></div>
+            <div>Ações</div>
           </div>
         </div>
 
@@ -144,21 +146,22 @@
           <table>
             <colgroup>
               <col class="col-sell"><col class="col-item"><col class="col-origin"><col class="col-category">
-              <col class="col-quantity"><col class="col-base"><col class="col-bonus"><col class="col-sale">
+              <col class="col-quantity"><col class="col-base"><col class="col-bonus"><col class="col-sale"><col class="col-actions">
             </colgroup>
             <thead>
               <tr>
                 <th class="sell-column">
-                  <span>Vender</span>
+                  <button class="sort-button" type="button" data-sort="vender">Vender</button>
                   <button id="toggleAll" class="toggle-all-button toggle-all-trigger" type="button">Marcar tudo</button>
                 </th>
-                <th>Item</th>
-                <th>Origem</th>
-                <th>Categoria</th>
-                <th class="number-column">Qtd.</th>
-                <th class="number-column">GP base</th>
-                <th class="number-column">Bônus</th>
-                <th class="number-column">Venda</th>
+                <th><button class="sort-button" type="button" data-sort="item">Item</button></th>
+                <th><button class="sort-button" type="button" data-sort="origem">Origem</button></th>
+                <th><button class="sort-button" type="button" data-sort="categoria">Categoria</button></th>
+                <th class="number-column"><button class="sort-button" type="button" data-sort="quantidade">Qtd.</button></th>
+                <th class="number-column"><button class="sort-button" type="button" data-sort="valorBase">GP base</button></th>
+                <th class="number-column"><button class="sort-button" type="button" data-sort="bonus">Bônus</button></th>
+                <th class="number-column"><button class="sort-button" type="button" data-sort="venda">Venda</button></th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="inventoryBody"></tbody>
@@ -184,6 +187,6 @@
   <audio id="tavernAudio" src="assets/tavern-ambience.mp3" loop preload="metadata"></audio>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="app.js?v=20260622-5"></script>
+  <script src="app.js?v=20260622-6"></script>
 </body>
 </html>

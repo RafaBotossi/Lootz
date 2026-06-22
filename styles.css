@@ -418,7 +418,7 @@ main { position: relative; }
   background: #f6e9cf;
   box-shadow: 0 15px 35px rgba(31, 18, 10, .35);
 }
-.category-option {
+.multi-filter-option {
   padding: 8px 9px;
   display: flex;
   align-items: center;
@@ -426,14 +426,14 @@ main { position: relative; }
   border-radius: 4px;
   cursor: pointer;
 }
-.category-option:hover { background: rgba(206, 145, 52, .13); }
-.category-option input {
+.multi-filter-option:hover { background: rgba(206, 145, 52, .13); }
+.multi-filter-option input {
   width: 16px;
   height: 16px;
   margin: 0;
   accent-color: #b97827;
 }
-.category-clear {
+.multi-filter-clear {
   width: 100%;
   padding: 8px 9px;
   border: 0;
@@ -473,6 +473,7 @@ table { width: 100%; border-collapse: collapse; }
 .col-base { width: 10%; }
 .col-bonus { width: 7%; }
 .col-sale { width: 10%; }
+.col-actions { width: 62px; }
 th {
   position: sticky;
   top: 350px;
@@ -487,6 +488,22 @@ th {
   background: #ead7b4;
   box-shadow: inset 0 -1px rgba(91, 61, 39, .2);
 }
+.sort-button {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  white-space: nowrap;
+}
+.sort-button:hover, .sort-button.active { color: #9b5d20; }
+.sort-button.active::after {
+  content: " ↑";
+  color: #b97827;
+}
+.sort-button.active[data-direction="desc"]::after { content: " ↓"; }
 td { padding: 15px 14px; border-top: 1px solid rgba(91, 61, 39, .13); vertical-align: middle; }
 tbody tr { transition: background .16s ease, opacity .16s ease; animation: rowIn .35s ease both; }
 tbody tr:hover { background: rgba(222, 169, 79, .11); }
@@ -544,6 +561,46 @@ tbody tr.kept { opacity: .69; }
 .inline-value span:last-child { font-size: .75rem; }
 .inline-percent { min-width: 74px; }
 .inline-percent input { width: 45px; }
+.inline-quantity { min-width: 54px; }
+.inline-quantity input { width: 38px; }
+.editable-text input {
+  width: 100%;
+  min-width: 80px;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #503721;
+  background: transparent;
+  outline: none;
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+.editable-text input:hover { border-color: rgba(91, 61, 39, .2); }
+.editable-text input:focus {
+  border-color: #b97827;
+  background: rgba(255, 250, 238, .9);
+  box-shadow: 0 0 0 2px rgba(185, 120, 39, .14);
+}
+.editable-text input[data-field="item"] { font-weight: 700; font-size: 1.04rem; }
+.editable-text .badge-input {
+  border-color: rgba(91, 61, 39, .2);
+  border-radius: 99px;
+  padding: 4px 8px;
+  background: rgba(255,255,255,.26);
+  font-size: .76rem;
+}
+.row-actions { text-align: center; }
+.remove-row {
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  border: 1px solid rgba(138, 63, 53, .3);
+  border-radius: 50%;
+  color: #8a3f35;
+  background: rgba(255,255,255,.25);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.remove-row:hover { color: #fff3e5; background: #8a3f35; }
 .sr-only {
   position: absolute;
   width: 1px;
@@ -643,7 +700,8 @@ footer p { margin: 5px; }
     --mobile-col-base: 108px;
     --mobile-col-bonus: 88px;
     --mobile-col-sale: 86px;
-    --mobile-table-width: 961px;
+    --mobile-col-actions: 62px;
+    --mobile-table-width: 1023px;
   }
   body::before { background-position: 38% center; }
   .topbar { height: 150px; width: calc(100% - 24px); }
@@ -738,7 +796,6 @@ footer p { margin: 5px; }
     min-width: 0;
     font-size: .78rem;
   }
-  #sortSelect { grid-column: 1 / -1; }
   .multi-select-menu { position: absolute; top: calc(100% + 6px); left: 0; right: auto; width: max(100%, 230px); max-height: 42vh; }
   .table-meta { align-items: flex-start; flex-direction: column; gap: 10px; }
   .table-actions { width: 100%; flex-wrap: wrap; gap: 6px; }
@@ -768,6 +825,7 @@ footer p { margin: 5px; }
   .col-base { width: var(--mobile-col-base); }
   .col-bonus { width: var(--mobile-col-bonus); }
   .col-sale { width: var(--mobile-col-sale); }
+  .col-actions { width: var(--mobile-col-actions); }
   table thead { visibility: collapse; }
   .mobile-table-header {
     position: sticky;
@@ -793,7 +851,8 @@ footer p { margin: 5px; }
       var(--mobile-col-quantity)
       var(--mobile-col-base)
       var(--mobile-col-bonus)
-      var(--mobile-col-sale);
+      var(--mobile-col-sale)
+      var(--mobile-col-actions);
     align-items: center;
   }
   .mobile-header-track > div {

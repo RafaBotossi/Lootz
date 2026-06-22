@@ -7,8 +7,9 @@ const state = {
   source: "Importe uma planilha ou carregue o exemplo",
   search: "",
   categories: [],
+  origins: [],
   sale: "",
-  sort: "original",
+  sort: { key: "original", direction: "asc" },
   visible: []
 };
 
@@ -19,6 +20,12 @@ const editableNumber = value => Number(Number(value || 0).toFixed(4));
 const normalized = value => String(value ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 const isCashItem = item => ["moedas", "recompensa"].includes(normalized(item.categoria));
+const platinumMatch = item => String(item.item).match(/^\s*(?:moedas?\s*:\s*)?([\d.,]+)\s*pp\s*$/i);
+const platinumAmount = item => {
+  const match = platinumMatch(item);
+  return match ? number(match[1]) * item.quantidade : 0;
+};
+const isPlatinumItem = item => Boolean(platinumMatch(item));
 
 function saleValue(item) {
   return item.vender && !isCashItem(item)
@@ -119,6 +126,9 @@ function loadInitialState() {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed.items) && parsed.items.length) {
         Object.assign(state, parsed);
+        state.categories = Array.isArray(state.categories) ? state.categories : [];
+        state.origins = Array.isArray(state.origins) ? state.origins : [];
+        if (!state.sort || typeof state.sort !== "object") state.sort = { key: "original", direction: "asc" };
       }
     } catch (_) {}
   }
@@ -139,16 +149,27 @@ function getVisibleItems() {
     const haystack = normalized(`${item.item} ${item.origem} ${item.observacao} ${item.estimativa}`);
     const searchMatch = !query || haystack.includes(query);
     const categoryMatch = !state.categories.length || state.categories.includes(item.categoria);
+    const originMatch = !state.origins.length || state.origins.includes(item.origem);
     const saleMatch = !state.sale || (state.sale === "sell" ? item.vender : !item.vender);
-    return searchMatch && categoryMatch && saleMatch;
+    return searchMatch && categoryMatch && originMatch && saleMatch;
   });
 
   return [...filtered].sort((a, b) => {
-    if (state.sort === "name-asc") return a.item.localeCompare(b.item, "pt-BR");
-    if (state.sort === "value-desc") return saleValue(b) - saleValue(a) || b.valorBase - a.valorBase;
-    if (state.sort === "value-asc") return (saleValue(a) || a.valorBase) - (saleValue(b) || b.valorBase);
-    if (state.sort === "origin") return a.origem.localeCompare(b.origem, "pt-BR");
-    return a.order - b.order;
+    const sort = typeof state.sort === "object" ? state.sort : { key: "original", direction: "asc" };
+    const direction = sort.direction === "desc" ? -1 : 1;
+    let result = 0;
+    if (["item", "origem", "categoria"].includes(sort.key)) {
+      result = String(a[sort.key]).localeCompare(String(b[sort.key]), "pt-BR", { sensitivity: "base" });
+    } else if (sort.key === "vender") {
+      result = Number(a.vender) - Number(b.vender);
+    } else if (sort.key === "venda") {
+      result = saleValue(a) - saleValue(b);
+    } else if (["quantidade", "valorBase", "bonus"].includes(sort.key)) {
+      result = a[sort.key] - b[sort.key];
+    } else {
+      result = a.order - b.order;
+    }
+    return result * direction || a.order - b.order;
   });
 }
 
@@ -162,13 +183,27 @@ function renderTable() {
           <span></span>
         </label>
       </td>
-      <td>
-        <span class="item-name">${escapeHtml(item.item)}</span>
+      <td class="editable-text">
+        <input type="text" data-id="${escapeHtml(item.id)}" data-field="item"
+          value="${escapeHtml(item.item)}" aria-label="Nome do item">
         ${item.observacao ? `<span class="item-note">${escapeHtml(item.observacao)}</span>` : ""}
       </td>
-      <td class="origin">${escapeHtml(item.origem)}</td>
-      <td><span class="badge">${escapeHtml(item.categoria)}</span></td>
-      <td class="number-column">${new Intl.NumberFormat("pt-BR").format(item.quantidade)}</td>
+      <td class="origin editable-text">
+        <input type="text" data-id="${escapeHtml(item.id)}" data-field="origem"
+          value="${escapeHtml(item.origem)}" aria-label="Origem de ${escapeHtml(item.item)}">
+      </td>
+      <td class="editable-text">
+        <input class="badge-input" type="text" data-id="${escapeHtml(item.id)}" data-field="categoria"
+          value="${escapeHtml(item.categoria)}" aria-label="Categoria de ${escapeHtml(item.item)}">
+      </td>
+      <td class="number-column editable-number">
+        <label class="inline-value inline-quantity">
+          <span class="sr-only">Quantidade de ${escapeHtml(item.item)}</span>
+          <input type="number" min="1" step="1" inputmode="numeric"
+            data-id="${escapeHtml(item.id)}" data-field="quantidade"
+            value="${editableNumber(item.quantidade)}" aria-label="Quantidade de ${escapeHtml(item.item)}">
+        </label>
+      </td>
       <td class="number-column editable-number">
         <label class="inline-value">
           <span class="sr-only">GP base de ${escapeHtml(item.item)}</span>
@@ -188,6 +223,10 @@ function renderTable() {
         </label>
       </td>
       <td class="number-column sale-value">${item.vender ? money(saleValue(item)) : "—"}</td>
+      <td class="row-actions">
+        <button class="remove-row" type="button" data-remove-id="${escapeHtml(item.id)}"
+          aria-label="Remover ${escapeHtml(item.item)}" title="Remover linha">×</button>
+      </td>
     </tr>
   `).join("");
 
@@ -203,22 +242,19 @@ function renderTable() {
 
 function renderSummary() {
   const cashItems = state.items.filter(isCashItem);
-  const platinum = cashItems.reduce((sum, item) => {
-    const match = item.item.match(/(?:^|\s)([\d.,]+)\s*pp\b/i);
-    return sum + (match ? number(match[1]) * item.quantidade : 0);
-  }, 0);
-  const platinumInGold = platinum / 10;
-  const cash = cashItems.reduce((sum, item) => sum + item.valorBase * item.quantidade, 0);
-  const gold = cash - platinumInGold;
+  const platinum = cashItems.reduce((sum, item) => sum + platinumAmount(item), 0);
+  const gold = cashItems
+    .filter(item => !isPlatinumItem(item))
+    .reduce((sum, item) => sum + item.valorBase * item.quantidade, 0);
   const sales = state.items.reduce((sum, item) => sum + saleValue(item), 0);
   const kept = state.items
     .filter(item => !item.vender && !isCashItem(item))
     .reduce((sum, item) => sum + item.valorBase * item.quantidade, 0);
-  const total = cash + sales;
+  const total = gold + sales;
 
   el("cashGpTotal").textContent = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(gold);
   el("cashPpTotal").textContent = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(platinum);
-  el("cashConverted").textContent = `Total convertido: ${money(cash)}`;
+  el("cashConverted").textContent = `Total em GP: ${money(gold)}`;
   el("saleTotal").textContent = money(sales);
   el("grandTotal").textContent = money(total);
   el("splitTotal").textContent = money(total / Math.max(1, state.members));
@@ -235,27 +271,111 @@ function renderSummary() {
   });
 }
 
-function renderCategories() {
-  const categories = [...new Set(state.items.map(item => item.categoria))].sort((a, b) => a.localeCompare(b, "pt-BR"));
-  state.categories = state.categories.filter(category => categories.includes(category));
-  el("categoryMenu").innerHTML = `
-    <button class="category-clear" type="button">Todas as categorias</button>
-    ${categories.map(category => `
-      <label class="category-option">
-        <input type="checkbox" value="${escapeHtml(category)}" ${state.categories.includes(category) ? "checked" : ""}>
-        <span>${escapeHtml(category)}</span>
+function renderMultiFilter({ values, selectedKey, menuId, labelId, allLabel, singular, plural }) {
+  const options = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  state[selectedKey] = state[selectedKey].filter(value => options.includes(value));
+  el(menuId).innerHTML = `
+    <button class="multi-filter-clear" type="button">${allLabel}</button>
+    ${options.map(value => `
+      <label class="multi-filter-option">
+        <input type="checkbox" value="${escapeHtml(value)}" ${state[selectedKey].includes(value) ? "checked" : ""}>
+        <span>${escapeHtml(value)}</span>
       </label>
     `).join("")}
   `;
-  el("categoryLabel").textContent = state.categories.length
-    ? `${state.categories.length} categoria${state.categories.length > 1 ? "s" : ""}`
-    : "Todas as categorias";
+  el(labelId).textContent = state[selectedKey].length
+    ? `${state[selectedKey].length} ${state[selectedKey].length > 1 ? plural : singular}`
+    : allLabel;
+}
+
+function renderFilters() {
+  renderMultiFilter({
+    values: state.items.map(item => item.categoria),
+    selectedKey: "categories",
+    menuId: "categoryMenu",
+    labelId: "categoryLabel",
+    allLabel: "Todas as categorias",
+    singular: "categoria",
+    plural: "categorias"
+  });
+  renderMultiFilter({
+    values: state.items.map(item => item.origem),
+    selectedKey: "origins",
+    menuId: "originMenu",
+    labelId: "originLabel",
+    allLabel: "Todas as origens",
+    singular: "origem",
+    plural: "origens"
+  });
+}
+
+function renderSortIndicators() {
+  const sort = typeof state.sort === "object" ? state.sort : { key: "original", direction: "asc" };
+  document.querySelectorAll(".sort-button").forEach(button => {
+    const active = button.dataset.sort === sort.key;
+    button.classList.toggle("active", active);
+    button.dataset.direction = active ? sort.direction : "";
+    button.setAttribute("aria-sort", active ? (sort.direction === "asc" ? "ascending" : "descending") : "none");
+  });
 }
 
 function refresh() {
-  renderCategories();
+  renderFilters();
   renderTable();
   renderSummary();
+  renderSortIndicators();
+}
+
+function addItem() {
+  const nextOrder = state.items.reduce((highest, item) => Math.max(highest, number(item.order)), -1) + 1;
+  const item = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    order: nextOrder,
+    origem: "Sem origem",
+    item: "Novo item",
+    quantidade: 1,
+    valorReal: 0,
+    valorEstimado: 0,
+    estimativa: "",
+    categoria: "Outros",
+    vender: false,
+    valorBase: 0,
+    bonus: 0,
+    observacao: ""
+  };
+  state.items.push(item);
+  state.search = "";
+  state.categories = [];
+  state.origins = [];
+  el("searchInput").value = "";
+  saveState();
+  refresh();
+  requestAnimationFrame(() => {
+    const input = el("inventoryBody").querySelector(`input[data-id="${CSS.escape(item.id)}"][data-field="item"]`);
+    input?.focus();
+    input?.select();
+  });
+  showToast("Nova linha adicionada.");
+}
+
+function replaceSelectedFilterValue(selectedKey, previousValue, nextValue) {
+  if (!state[selectedKey].includes(previousValue)) return;
+  const itemField = selectedKey === "origins" ? "origem" : "categoria";
+  const previousStillExists = state.items.some(item => item[itemField] === previousValue);
+  state[selectedKey] = [...new Set([
+    ...state[selectedKey].filter(value => previousStillExists || value !== previousValue),
+    nextValue
+  ])];
+}
+
+function setSort(key) {
+  const current = typeof state.sort === "object" ? state.sort : { key: "original", direction: "asc" };
+  state.sort = {
+    key,
+    direction: current.key === key && current.direction === "asc" ? "desc" : "asc"
+  };
+  renderTable();
+  renderSortIndicators();
 }
 
 function setVisibleSale(value) {
@@ -301,8 +421,11 @@ function exportSpreadsheet() {
     }));
 
   const cash = state.items
-    .filter(isCashItem)
+    .filter(item => isCashItem(item) && !isPlatinumItem(item))
     .reduce((sum, item) => sum + item.valorBase * item.quantidade, 0);
+  const platinum = state.items
+    .filter(isCashItem)
+    .reduce((sum, item) => sum + platinumAmount(item), 0);
   const sales = state.items.reduce((sum, item) => sum + saleValue(item), 0);
   const kept = state.items
     .filter(item => !item.vender && !isCashItem(item))
@@ -312,12 +435,13 @@ function exportSpreadsheet() {
   const summaryRows = [
     ["Resumo do caixa e divisão — LootZ", ""],
     [],
-    ["Componente", "Total (gp)"],
-    ["Moedas e recompensas em caixa", cash],
-    ["Receita estimada de vendas", sales],
-    ["Total disponível para dividir", total],
-    ["Divisão por pessoa", total / Math.max(1, state.members)],
-    ["Itens mantidos (valor de referência)", kept]
+    ["Componente", "Total", "Unidade"],
+    ["Moedas e recompensas em caixa", cash, "GP"],
+    ["Moedas de platina em caixa", platinum, "PP"],
+    ["Receita estimada de vendas", sales, "GP"],
+    ["Total disponível para dividir", total, "GP"],
+    ["Divisão por pessoa", total / Math.max(1, state.members), "GP"],
+    ["Itens mantidos (valor de referência)", kept, "GP"]
   ];
   const categoryBonus = category => {
     const item = state.items.find(candidate => normalized(candidate.categoria) === normalized(category));
@@ -338,7 +462,7 @@ function exportSpreadsheet() {
         item.categoria,
         item.vender ? "Sim" : "Não",
         item.valorBase * item.quantidade,
-        isCashItem(item) ? item.valorBase * item.quantidade : 0,
+        isCashItem(item) && !isPlatinumItem(item) ? item.valorBase * item.quantidade : 0,
         saleValue(item),
         !item.vender && !isCashItem(item) ? item.valorBase * item.quantidade : 0
       ])
@@ -354,7 +478,7 @@ function exportSpreadsheet() {
     { wch: 30 }, { wch: 42 }, { wch: 8 }, { wch: 17 }, { wch: 21 }, { wch: 48 },
     { wch: 18 }, { wch: 11 }, { wch: 18 }, { wch: 17 }, { wch: 21 }, { wch: 48 }
   ];
-  summarySheet["!cols"] = [{ wch: 40 }, { wch: 20 }];
+  summarySheet["!cols"] = [{ wch: 40 }, { wch: 20 }, { wch: 12 }];
   parameterSheet["!cols"] = [{ wch: 32 }, { wch: 16 }];
   calculationSheet["!cols"] = [{ wch: 20 }, { wch: 12 }, { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
 
@@ -447,6 +571,18 @@ el("inventoryBody").addEventListener("change", event => {
 
   if (event.target.matches("input[type='checkbox']")) {
     item.vender = event.target.checked;
+  } else if (event.target.matches("input[data-field='item']")) {
+    item.item = event.target.value.trim() || "Item sem nome";
+  } else if (event.target.matches("input[data-field='origem']")) {
+    const previousValue = item.origem;
+    item.origem = event.target.value.trim() || "Sem origem";
+    replaceSelectedFilterValue("origins", previousValue, item.origem);
+  } else if (event.target.matches("input[data-field='categoria']")) {
+    const previousValue = item.categoria;
+    item.categoria = event.target.value.trim() || "Outros";
+    replaceSelectedFilterValue("categories", previousValue, item.categoria);
+  } else if (event.target.matches("input[data-field='quantidade']")) {
+    item.quantidade = Math.max(1, Math.round(number(event.target.value)));
   } else if (event.target.matches("input[data-field='valorBase']")) {
     item.valorBase = Math.max(0, number(event.target.value));
   } else if (event.target.matches("input[data-field='bonus']")) {
@@ -459,32 +595,53 @@ el("inventoryBody").addEventListener("change", event => {
   refresh();
 });
 
+el("inventoryBody").addEventListener("click", event => {
+  const button = event.target.closest("[data-remove-id]");
+  if (!button) return;
+  const item = state.items.find(candidate => String(candidate.id) === button.dataset.removeId);
+  if (!item || !confirm(`Remover "${item.item}" do inventário?`)) return;
+  state.items = state.items.filter(candidate => candidate !== item);
+  saveState();
+  refresh();
+  showToast("Linha removida.");
+});
+
 el("searchInput").addEventListener("input", event => { state.search = event.target.value; renderTable(); });
-el("categoryToggle").addEventListener("click", () => {
-  const menu = el("categoryMenu");
+function toggleMultiFilter(toggleId, menuId) {
+  const menu = el(menuId);
   const willOpen = menu.hidden;
+  document.querySelectorAll(".multi-select-menu").forEach(candidate => { candidate.hidden = true; });
+  document.querySelectorAll(".multi-select-toggle").forEach(candidate => candidate.setAttribute("aria-expanded", "false"));
   menu.hidden = !willOpen;
-  el("categoryToggle").setAttribute("aria-expanded", String(willOpen));
-});
-el("categoryMenu").addEventListener("change", event => {
-  if (!event.target.matches("input[type='checkbox']")) return;
-  state.categories = [...el("categoryMenu").querySelectorAll("input:checked")].map(input => input.value);
-  renderCategories();
-  renderTable();
-});
-el("categoryMenu").addEventListener("click", event => {
-  if (!event.target.closest(".category-clear")) return;
-  state.categories = [];
-  renderCategories();
-  renderTable();
-});
+  el(toggleId).setAttribute("aria-expanded", String(willOpen));
+}
+
+function setupMultiFilter({ filterId, toggleId, menuId, selectedKey }) {
+  el(toggleId).addEventListener("click", () => toggleMultiFilter(toggleId, menuId));
+  el(menuId).addEventListener("change", event => {
+    if (!event.target.matches("input[type='checkbox']")) return;
+    state[selectedKey] = [...el(menuId).querySelectorAll("input:checked")].map(input => input.value);
+    renderFilters();
+    renderTable();
+  });
+  el(menuId).addEventListener("click", event => {
+    if (!event.target.closest(".multi-filter-clear")) return;
+    state[selectedKey] = [];
+    renderFilters();
+    renderTable();
+  });
+  return filterId;
+}
+
+setupMultiFilter({ filterId: "categoryFilter", toggleId: "categoryToggle", menuId: "categoryMenu", selectedKey: "categories" });
+setupMultiFilter({ filterId: "originFilter", toggleId: "originToggle", menuId: "originMenu", selectedKey: "origins" });
 document.addEventListener("click", event => {
-  if (event.target.closest("#categoryFilter")) return;
-  el("categoryMenu").hidden = true;
-  el("categoryToggle").setAttribute("aria-expanded", "false");
+  if (event.target.closest(".multi-select")) return;
+  document.querySelectorAll(".multi-select-menu").forEach(menu => { menu.hidden = true; });
+  document.querySelectorAll(".multi-select-toggle").forEach(toggle => toggle.setAttribute("aria-expanded", "false"));
 });
 el("saleFilter").addEventListener("change", event => { state.sale = event.target.value; renderTable(); });
-el("sortSelect").addEventListener("change", event => { state.sort = event.target.value; renderTable(); });
+document.querySelectorAll(".sort-button").forEach(button => button.addEventListener("click", () => setSort(button.dataset.sort)));
 document.querySelectorAll(".toggle-all-trigger").forEach(button => button.addEventListener("click", () => {
   const sellableItems = state.items.filter(item => !isCashItem(item));
   const allSelected = sellableItems.length > 0 && sellableItems.every(item => item.vender);
@@ -507,6 +664,7 @@ mobileTableHeader.addEventListener("scroll", () => {
   requestAnimationFrame(() => { syncingTableScroll = false; });
 });
 el("exportSpreadsheet").addEventListener("click", exportSpreadsheet);
+el("addItem").addEventListener("click", addItem);
 el("soundToggle").addEventListener("click", toggleAmbience);
 el("volumeSlider").addEventListener("input", event => {
   const volume = number(event.target.value);
