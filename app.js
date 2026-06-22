@@ -257,147 +257,27 @@ function setupEmbers() {
   }).join("");
 }
 
-let audioContext;
-let ambienceNodes = [];
-let ambienceTimers = [];
 let soundEnabled = true;
 let soundStarted = false;
 
-function makeNoise(seconds = 5) {
-  const buffer = audioContext.createBuffer(2, audioContext.sampleRate * seconds, audioContext.sampleRate);
-  for (let channelIndex = 0; channelIndex < 2; channelIndex++) {
-    const channel = buffer.getChannelData(channelIndex);
-    let brown = 0;
-    for (let i = 0; i < channel.length; i++) {
-      brown = (brown + 0.018 * (Math.random() * 2 - 1)) / 1.018;
-      channel[i] = brown * 3.2;
-    }
-  }
-  return buffer;
-}
-
-function randomMurmur(master) {
-  if (!soundStarted) return;
-  const now = audioContext.currentTime;
-  const duration = 1.7 + Math.random() * 2.8;
-  const voice = audioContext.createOscillator();
-  const formant = audioContext.createBiquadFilter();
-  const gain = audioContext.createGain();
-  const pan = audioContext.createStereoPanner();
-  voice.type = "sawtooth";
-  voice.frequency.setValueAtTime(72 + Math.random() * 55, now);
-  voice.frequency.linearRampToValueAtTime(65 + Math.random() * 70, now + duration);
-  formant.type = "bandpass";
-  formant.frequency.setValueAtTime(420 + Math.random() * 600, now);
-  formant.Q.value = 1.2;
-  pan.pan.value = Math.random() * 1.6 - .8;
-  gain.gain.setValueAtTime(0, now);
-  gain.gain.linearRampToValueAtTime(.008 + Math.random() * .009, now + .4);
-  gain.gain.setValueAtTime(.007, now + duration - .5);
-  gain.gain.linearRampToValueAtTime(0, now + duration);
-  voice.connect(formant).connect(gain).connect(pan).connect(master);
-  voice.start(now);
-  voice.stop(now + duration);
-  ambienceTimers.push(setTimeout(() => randomMurmur(master), 500 + Math.random() * 1800));
-}
-
-function randomClink(master) {
-  if (!soundStarted) return;
-  const now = audioContext.currentTime;
-  [0, .045].forEach((offset, index) => {
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    const pan = audioContext.createStereoPanner();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime((index ? 2380 : 1740) + Math.random() * 350, now + offset);
-    osc.frequency.exponentialRampToValueAtTime(900, now + offset + .18);
-    gain.gain.setValueAtTime(.025, now + offset);
-    gain.gain.exponentialRampToValueAtTime(.0001, now + offset + .22);
-    pan.pan.value = Math.random() * 1.5 - .75;
-    osc.connect(gain).connect(pan).connect(master);
-    osc.start(now + offset);
-    osc.stop(now + offset + .24);
-  });
-  ambienceTimers.push(setTimeout(() => randomClink(master), 5000 + Math.random() * 11000));
-}
-
-function randomLute(master) {
-  if (!soundStarted) return;
-  const notes = [146.83, 174.61, 196, 220, 246.94, 293.66];
-  const now = audioContext.currentTime;
-  const base = notes[Math.floor(Math.random() * notes.length)];
-  [1, 1.5, 2].forEach((ratio, index) => {
-    const osc = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    const pan = audioContext.createStereoPanner();
-    osc.type = index ? "sine" : "triangle";
-    osc.frequency.value = base * ratio;
-    gain.gain.setValueAtTime(.018 / (index + 1), now + index * .11);
-    gain.gain.exponentialRampToValueAtTime(.0001, now + 1.8 + index * .15);
-    pan.pan.value = -.3;
-    osc.connect(gain).connect(pan).connect(master);
-    osc.start(now + index * .11);
-    osc.stop(now + 2.1);
-  });
-  ambienceTimers.push(setTimeout(() => randomLute(master), 7000 + Math.random() * 9000));
-}
-
-function startAmbience(silent = false) {
+async function startAmbience(silent = false) {
   if (!soundEnabled || soundStarted) return;
-  audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const master = audioContext.createGain();
-  const compressor = audioContext.createDynamicsCompressor();
-  master.gain.value = .34;
-  master.connect(compressor).connect(audioContext.destination);
-
-  const room = audioContext.createBufferSource();
-  const roomFilter = audioContext.createBiquadFilter();
-  const roomGain = audioContext.createGain();
-  room.buffer = makeNoise(7);
-  room.loop = true;
-  roomFilter.type = "lowpass";
-  roomFilter.frequency.value = 580;
-  roomGain.gain.value = .055;
-  room.connect(roomFilter).connect(roomGain).connect(master);
-  room.start();
-
-  const fire = audioContext.createBufferSource();
-  const fireFilter = audioContext.createBiquadFilter();
-  const fireGain = audioContext.createGain();
-  fire.buffer = makeNoise(4);
-  fire.loop = true;
-  fireFilter.type = "highpass";
-  fireFilter.frequency.value = 1800;
-  fireGain.gain.value = .025;
-  fire.connect(fireFilter).connect(fireGain).connect(master);
-  fire.start();
-
-  const warmth = audioContext.createOscillator();
-  const warmthGain = audioContext.createGain();
-  warmth.type = "sine";
-  warmth.frequency.value = 55;
-  warmthGain.gain.value = .012;
-  warmth.connect(warmthGain).connect(master);
-  warmth.start();
-
-  ambienceNodes = [room, roomFilter, roomGain, fire, fireFilter, fireGain, warmth, warmthGain, master, compressor];
-  soundStarted = true;
-  randomMurmur(master);
-  randomMurmur(master);
-  randomClink(master);
-  randomLute(master);
-  updateSoundButton();
-  if (!silent) showToast("A taverna ganhou vida.");
+  const audio = el("tavernAudio");
+  audio.volume = 0.32;
+  try {
+    await audio.play();
+    soundStarted = true;
+    updateSoundButton();
+    if (!silent) showToast("A música da taverna começou.");
+  } catch (_) {
+    soundStarted = false;
+  }
 }
 
 function stopAmbience() {
+  const audio = el("tavernAudio");
+  audio.pause();
   soundStarted = false;
-  ambienceTimers.forEach(clearTimeout);
-  ambienceTimers = [];
-  ambienceNodes.forEach(node => { try { node.stop?.(); node.disconnect?.(); } catch (_) {} });
-  ambienceNodes = [];
-  audioContext?.close();
-  audioContext = null;
 }
 
 function updateSoundButton() {
