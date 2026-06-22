@@ -95,9 +95,13 @@
             <span aria-hidden="true">⌕</span>
             <input id="searchInput" type="search" placeholder="Buscar item, origem ou observação...">
           </label>
-          <select id="categoryFilter" aria-label="Filtrar por categoria">
-            <option value="">Todas as categorias</option>
-          </select>
+          <div id="categoryFilter" class="multi-select">
+            <button id="categoryToggle" class="multi-select-toggle" type="button" aria-haspopup="true" aria-expanded="false">
+              <span id="categoryLabel">Todas as categorias</span>
+              <span aria-hidden="true">▾</span>
+            </button>
+            <div id="categoryMenu" class="multi-select-menu" hidden></div>
+          </div>
           <select id="saleFilter" aria-label="Filtrar por decisão">
             <option value="">Tudo no inventário</option>
             <option value="sell">Marcados para venda</option>
@@ -114,7 +118,13 @@
 
         <div class="table-meta">
           <p>Exibindo <strong id="visibleCount">0</strong> de <strong id="itemCount">0</strong> itens</p>
-          <button id="exportCsv" class="text-button" type="button">Baixar seleção em CSV ↓</button>
+          <div class="table-actions">
+            <button id="selectAll" class="text-button" type="button">Marcar tudo</button>
+            <span></span>
+            <button id="clearAll" class="text-button" type="button">Desmarcar tudo</button>
+            <span></span>
+            <button id="exportCsv" class="text-button" type="button">Baixar seleção em CSV ↓</button>
+          </div>
         </div>
 
         <div class="table-scroll">

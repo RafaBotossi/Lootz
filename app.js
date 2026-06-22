@@ -6,7 +6,7 @@ const state = {
   members: 3,
   source: DEFAULT_FILE,
   search: "",
-  category: "",
+  categories: [],
   sale: "",
   sort: "original",
   visible: []
@@ -126,7 +126,7 @@ function getVisibleItems() {
   const filtered = state.items.filter(item => {
     const haystack = normalized(`${item.item} ${item.origem} ${item.observacao} ${item.estimativa}`);
     const searchMatch = !query || haystack.includes(query);
-    const categoryMatch = !state.category || item.categoria === state.category;
+    const categoryMatch = !state.categories.length || state.categories.includes(item.categoria);
     const saleMatch = !state.sale || (state.sale === "sell" ? item.vender : !item.vender);
     return searchMatch && categoryMatch && saleMatch;
   });
@@ -197,11 +197,20 @@ function renderSummary() {
 }
 
 function renderCategories() {
-  const selected = state.category;
   const categories = [...new Set(state.items.map(item => item.categoria))].sort((a, b) => a.localeCompare(b, "pt-BR"));
-  el("categoryFilter").innerHTML = `<option value="">Todas as categorias</option>` +
-    categories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
-  el("categoryFilter").value = selected;
+  state.categories = state.categories.filter(category => categories.includes(category));
+  el("categoryMenu").innerHTML = `
+    <button class="category-clear" type="button">Todas as categorias</button>
+    ${categories.map(category => `
+      <label class="category-option">
+        <input type="checkbox" value="${escapeHtml(category)}" ${state.categories.includes(category) ? "checked" : ""}>
+        <span>${escapeHtml(category)}</span>
+      </label>
+    `).join("")}
+  `;
+  el("categoryLabel").textContent = state.categories.length
+    ? `${state.categories.length} categoria${state.categories.length > 1 ? "s" : ""}`
+    : "Todas as categorias";
 }
 
 function refresh() {
@@ -218,6 +227,15 @@ function setVisibleSale(value) {
   saveState();
   refresh();
   showToast(value ? "Itens visíveis marcados para venda." : "Itens visíveis voltaram para o baú.");
+}
+
+function setAllSale(value) {
+  state.items.forEach(item => {
+    if (!isCashItem(item)) item.vender = value;
+  });
+  saveState();
+  refresh();
+  showToast(value ? "Todos os itens vendáveis foram marcados." : "Todos os itens foram desmarcados.");
 }
 
 function exportCsv() {
@@ -321,9 +339,33 @@ el("inventoryBody").addEventListener("change", event => {
 });
 
 el("searchInput").addEventListener("input", event => { state.search = event.target.value; renderTable(); });
-el("categoryFilter").addEventListener("change", event => { state.category = event.target.value; renderTable(); });
+el("categoryToggle").addEventListener("click", () => {
+  const menu = el("categoryMenu");
+  const willOpen = menu.hidden;
+  menu.hidden = !willOpen;
+  el("categoryToggle").setAttribute("aria-expanded", String(willOpen));
+});
+el("categoryMenu").addEventListener("change", event => {
+  if (!event.target.matches("input[type='checkbox']")) return;
+  state.categories = [...el("categoryMenu").querySelectorAll("input:checked")].map(input => input.value);
+  renderCategories();
+  renderTable();
+});
+el("categoryMenu").addEventListener("click", event => {
+  if (!event.target.closest(".category-clear")) return;
+  state.categories = [];
+  renderCategories();
+  renderTable();
+});
+document.addEventListener("click", event => {
+  if (event.target.closest("#categoryFilter")) return;
+  el("categoryMenu").hidden = true;
+  el("categoryToggle").setAttribute("aria-expanded", "false");
+});
 el("saleFilter").addEventListener("change", event => { state.sale = event.target.value; renderTable(); });
 el("sortSelect").addEventListener("change", event => { state.sort = event.target.value; renderTable(); });
+el("selectAll").addEventListener("click", () => setAllSale(true));
+el("clearAll").addEventListener("click", () => setAllSale(false));
 el("exportCsv").addEventListener("click", exportCsv);
 el("soundToggle").addEventListener("click", toggleAmbience);
 el("volumeSlider").addEventListener("input", event => {
